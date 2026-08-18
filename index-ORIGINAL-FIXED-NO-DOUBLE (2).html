@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EL3AB W EKSAB - 1xBet Pro Edition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Cairo'}
+body{background:#0B0E2A;color:#fff;overflow-x:hidden}
+.glass{background:rgba(17,26,82,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+@keyframes fly{0%{transform:translate(0,0) rotate(15deg)}50%{transform:translate(8px,-8px) rotate(18deg)}100%{transform:translate(0,0) rotate(15deg)}}
+.plane-anim{animation:fly 1s ease-in-out infinite}
+</style>
+</head>
+<body>
+<header class="sticky top-0 z-40 bg-[#0A0E32]/95 backdrop-blur-xl border-b border-white/10">
+<div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+<div class="flex gap-3 items-center">
+<h1 class="font-black text-[20px] leading-none">EL3AB<br><span class="text-[#2F80ED]">W EKSAB</span></h1>
+<button onclick="openSettings()" class="w-10 h-10 bg-white/10 rounded-full">⚙️</button>
+<span id="pendingBadge" class="hidden bg-red-600 text-white text-[10px] px-2 py-1 rounded-full font-black">طلبات جديدة</span>
+</div>
+<div id="authButtons" class="flex gap-2">
+<button onclick="openRegister()" class="bg-[#2F80ED] px-5 py-2.5 rounded-full font-bold text-sm">إنشاء حساب</button>
+<button onclick="openLogin()" class="bg-white text-black px-5 py-2.5 rounded-full font-bold text-sm">دخول</button>
+</div>
+<div id="userBar" class="hidden items-center gap-2">
+<div class="bg-[#1A2460] px-3 py-2 rounded-full flex gap-2 border border-white/10">
+<span id="userBalance" class="font-black text-[#2CB26B] text-sm">0 ج.م</span>
+<button onclick="openDeposit()" class="bg-[#2F80ED] w-6 h-6 rounded-full text-xs">+</button>
+</div>
+<button onclick="openDeposit()" class="bg-[#2F80ED] px-4 py-2 rounded-full text-xs font-bold">+ إيداع</button>
+<button onclick="openWithdraw()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">💸 سحب</button>
+<button onclick="logout()" class="w-8 h-8 bg-white/10 rounded-full">⎋</button>
+</div>
+</div>
+</header>
+
+<section class="max-w-7xl mx-auto px-4 py-5">
+<div class="glass rounded-[24px] p-5 md:p-7 relative overflow-hidden">
+<div class="absolute -top-20 -left-20 w-80 h-80 bg-[#2F80ED]/20 blur-[80px] rounded-full"></div>
+<h2 class="text-[36px] md:text-[48px] font-black leading-[0.9]">العب واكسب<br><span class="text-[#2F80ED]">فلوس فوراً</span></h2>
+<p class="text-white/40 text-sm mt-2">✈️ طيارة حقيقية بمنحنى Canvas • سحب فودافون كاش & انستاباي 01554801581</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6" id="gamesGrid"></div>
+</div>
+</section>
+
+<!-- SETTINGS -->
+<div id="settingsModal" class="fixed inset-0 bg-black/85 z-[100] hidden flex items-center justify-center p-4">
+<div class="bg-[#121958] border border-white/10 rounded-[24px] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+<div class="p-6">
+<div class="flex justify-between mb-5"><h3 class="font-black text-lg">⚙️ الإعدادات والتحكم</h3><button onclick="closeSettings()" class="w-8 h-8 bg-white/10 rounded-full">✕</button></div>
+
+<div class="space-y-3">
+<div class="bg-gradient-to-br from-[#FFD700]/20 to-orange-500/20 border border-[#FFD700]/40 rounded-xl p-4">
+<p class="font-black text-[#FFD700] text-sm mb-2">🔐 لوحة تحكم المالك - باسورد 451240</p>
+<button onclick="openAdminPanel()" class="w-full bg-[#FFD700] text-black py-3 rounded-full font-black">🔓 فتح لوحة التحكم الكاملة</button>
+</div>
+
+<div class="bg-[#0A0E32] rounded-xl p-4 border border-white/5">
+<p class="font-bold text-sm mb-3">📥 طلبات الإيداع المعلقة</p>
+<div id="settingsDeposits" class="space-y-2 max-h-32 overflow-y-auto text-xs"></div>
+</div>
+
+<div class="bg-[#0A0E32] rounded-xl p-4 border border-white/5">
+<p class="font-bold text-sm mb-3">📤 طلبات السحب المعلقة</p>
+<div id="settingsWithdraws" class="space-y-2 max-h-32 overflow-y-auto text-xs"></div>
+</div>
+
+<div class="bg-[#0A0E32] rounded-xl p-4 border border-white/5">
+<p class="font-bold text-sm mb-2">💳 طرق الدفع</p>
+<div class="text-[11px] text-white/50">فودافون/أورنج/اتصالات/WE: 01554801581<br>انستا باي: keroulskaram05@instapay</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- DEPOSIT -->
+<div id="depositModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+<div class="bg-[#121958] rounded-[20px] p-6 w-full max-w-sm border border-white/10">
+<h3 class="font-black mb-4">💳 طلب إيداع جديد</h3>
+<input id="depositAmount" type="number" value="250" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-3 text-center font-black">
+<div class="grid grid-cols-4 gap-2 mb-3">
+<button onclick="setDep(100)" class="bg-white/5 py-2 rounded-lg text-xs">100</button>
+<button onclick="setDep(250)" class="bg-[#2F80ED] py-2 rounded-lg text-xs">250</button>
+<button onclick="setDep(500)" class="bg-white/5 py-2 rounded-lg text-xs">500</button>
+<button onclick="setDep(1000)" class="bg-white/5 py-2 rounded-lg text-xs">1000</button>
+</div>
+<div id="depositMethods" class="grid gap-2 mb-3"></div>
+<div class="bg-[#0A0E32] p-3 rounded-xl mb-3 text-center"><p class="text-[10px] text-white/40">حول على:</p><p id="selectedNumber" class="font-mono font-black">01554801581</p></div>
+<input id="depositProof" placeholder="رقم العملية أو سكرين (اختياري)" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-3 text-sm">
+<button onclick="submitDepositRequest()" class="w-full bg-[#2CB26B] py-3 rounded-full font-black">📤 إرسال طلب الإيداع</button>
+<button onclick="closeDeposit()" class="w-full bg-white/10 py-2 rounded-full mt-2">إغلاق</button>
+<p class="text-[10px] text-white/30 mt-2 text-center">سيتم مراجعة طلبك من الإدارة خلال دقائق</p>
+</div>
+</div>
+
+<!-- WITHDRAW -->
+<div id="withdrawModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+<div class="bg-[#121958] rounded-[20px] p-6 w-full max-w-sm border border-white/10">
+<h3 class="font-black mb-4">💸 طلب سحب</h3>
+<p class="text-xs text-white/50 mb-3">رصيدك: <span id="withdrawBalance" class="text-[#2CB26B] font-black">0</span></p>
+<input id="withdrawAmount" type="number" placeholder="المبلغ (100ج حد أدنى)" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2">
+<input id="withdrawWallet" placeholder="رقم المحفظة 01xxxxxxxxx" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2">
+<select id="withdrawMethod" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-3 text-sm">
+<option value="vodafone">فودافون كاش</option>
+<option value="orange">أورنج كاش</option>
+<option value="etisalat">اتصالات كاش</option>
+<option value="we">WE كاش</option>
+<option value="instapay">انستا باي</option>
+</select>
+<button onclick="submitWithdrawRequest()" class="w-full bg-white text-black py-3 rounded-full font-black">📤 إرسال طلب السحب</button>
+<button onclick="closeWithdraw()" class="w-full bg-white/10 py-2 rounded-full mt-2">إغلاق</button>
+</div>
+</div>
+
+<!-- LOGIN / REGISTER -->
+<div id="loginModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4"><div class="bg-[#121958] rounded-[20px] p-6 w-full max-w-sm"><h3 class="font-black mb-4">دخول</h3><input id="loginPhone" placeholder="01xxxxxxxxx" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2"><input id="loginPass" type="password" placeholder="باسورد" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-3"><button onclick="doLogin()" class="w-full bg-[#2F80ED] py-3 rounded-full font-black">دخول</button><button onclick="closeLogin()" class="w-full bg-white/10 py-2 rounded-full mt-2">إغلاق</button></div></div>
+<div id="registerModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4"><div class="bg-[#121958] rounded-[20px] p-6 w-full max-w-sm"><h3 class="font-black mb-4">إنشاء حساب</h3><input id="regName" placeholder="الاسم" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2"><input id="regPhone" placeholder="01xxxxxxxxx" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2"><input id="regPass" type="password" placeholder="باسورد" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-2"><input id="regPass2" type="password" placeholder="تأكيد" class="w-full bg-[#0A0E32] border border-white/10 rounded-xl p-3 mb-3"><button onclick="doRegister()" class="w-full bg-[#2F80ED] py-3 rounded-full font-black">إنشاء</button><button onclick="closeRegister()" class="w-full bg-white/10 py-2 rounded-full mt-2">إغلاق</button></div></div>
+
+<!-- GAME MODAL WITH REAL CANVAS CRASH -->
+
+<div id="gameModal" class="fixed inset-0 bg-[#070A23] z-50 hidden flex flex-col">
+<div class="p-3 bg-[#0A0E32] border-b border-white/10 flex justify-between items-center">
+<div class="flex gap-2 items-center"><span id="gameIcon" class="text-2xl">✈️</span><h3 id="gameTitle" class="font-black">Crash</h3><span class="bg-[#2CB26B]/20 text-[#2CB26B] text-[10px] px-2 py-1 rounded-full">LIVE 1xBet</span></div>
+<button onclick="closeGame()" class="w-8 h-8 bg-white/10 rounded-full">✕</button>
+</div>
+<div class="flex-1 p-4 flex flex-col overflow-y-auto">
+
+<!-- CRASH GAME -->
+<div id="crashGame" class="game-container">
+<div class="relative bg-[#0A0E32] rounded-[16px] border border-white/10 h-[260px] overflow-hidden">
+<canvas id="crashCanvas" class="w-full h-full"></canvas>
+<div id="crashMult" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[48px] font-black">1.00x</div>
+<div id="crashPlane" class="absolute text-[28px] plane-anim" style="left:20%; bottom:30%">✈️</div>
+<div id="crashHistory" class="absolute bottom-2 left-2 flex gap-1"></div>
+</div>
+</div>
+
+<!-- PLINKO GAME -->
+<div id="plinkoGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-4">
+<div class="grid grid-cols-8 gap-1 mb-4" id="plinkoBoard"></div>
+<div class="flex justify-center"><div id="plinkoBall" class="w-3 h-3 bg-white rounded-full hidden"></div></div>
+<div class="grid grid-cols-8 gap-1 mt-2" id="plinkoMultipliers"></div>
+</div>
+</div>
+
+<!-- ROULETTE GAME -->
+<div id="rouletteGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-4 text-center">
+<div id="rouletteWheel" class="w-40 h-40 mx-auto rounded-full border-4 border-[#FFD700] flex items-center justify-center text-4xl transition-transform duration-[3s]">🎡</div>
+<div id="rouletteResult" class="mt-4 text-2xl font-black">-</div>
+<div class="grid grid-cols-3 gap-2 mt-4">
+<button onclick="rouletteBet('red')" class="bg-red-600 py-3 rounded-xl font-bold">🔴 أحمر x2</button>
+<button onclick="rouletteBet('black')" class="bg-[#1A1A1A] border border-white/20 py-3 rounded-xl font-bold">⚫ أسود x2</button>
+<button onclick="rouletteBet('green')" class="bg-green-600 py-3 rounded-xl font-bold">🟢 أخضر x14</button>
+</div>
+</div>
+</div>
+
+<!-- SLOTS GAME -->
+<div id="slotsGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-6">
+<div class="grid grid-cols-3 gap-2 bg-black p-4 rounded-xl" id="slotsReels">
+<div class="bg-white text-4xl p-4 rounded text-center">🍭</div>
+<div class="bg-white text-4xl p-4 rounded text-center">🍭</div>
+<div class="bg-white text-4xl p-4 rounded text-center">🍭</div>
+</div>
+<div id="slotsWin" class="text-center mt-3 font-black text-[#FFD700]"></div>
+</div>
+</div>
+
+<!-- DICE GAME -->
+<div id="diceGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-6 text-center">
+<div id="diceResult" class="text-[80px]">🎲</div>
+<div id="diceNumber" class="text-3xl font-black mt-2">-</div>
+<input type="range" id="diceSlider" min="1" max="100" value="50" class="w-full mt-4">
+<div class="flex justify-between text-xs text-white/40 mt-1"><span>1</span><span id="diceTarget">50</span><span>100</span></div>
+<div class="grid grid-cols-2 gap-2 mt-4">
+<button onclick="diceBet('under')" class="bg-[#2F80ED] py-3 rounded-xl font-bold">أقل من <span id="diceUnder">50</span> x<span id="diceUnderMult">2</span></button>
+<button onclick="diceBet('over')" class="bg-[#8B5CF6] py-3 rounded-xl font-bold">أكثر من <span id="diceOver">50</span> x<span id="diceOverMult">2</span></button>
+</div>
+</div>
+</div>
+
+<!-- MINES GAME -->
+<div id="minesGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-4">
+<div class="grid grid-cols-5 gap-2" id="minesGrid"></div>
+<div class="mt-3 flex justify-between text-xs"><span>💎 وجدت: <span id="minesFound">0</span></span><span>الربح الحالي: <span id="minesProfit">0</span>ج</span></div>
+<button id="minesCashout" onclick="minesCashout()" class="w-full mt-3 bg-[#2CB26B] py-3 rounded-full font-black hidden">سحب الأرباح</button>
+</div>
+</div>
+
+<!-- BLACKJACK GAME -->
+<div id="blackjackGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-4">
+<div class="mb-4"><p class="text-xs text-white/40">الموزع: <span id="dealerCards" class="text-white font-bold"></span> = <span id="dealerScore">0</span></p></div>
+<div class="mb-4"><p class="text-xs text-white/40">أنت: <span id="playerCards" class="text-white font-bold"></span> = <span id="playerScore">0</span></p></div>
+<div id="blackjackResult" class="text-center font-black text-lg my-3"></div>
+<div class="grid grid-cols-2 gap-2">
+<button onclick="blackjackHit()" class="bg-[#2F80ED] py-3 rounded-xl font-bold">سحب كارت</button>
+<button onclick="blackjackStand()" class="bg-white text-black py-3 rounded-xl font-bold">توقف</button>
+</div>
+</div>
+</div>
+
+<!-- WHEEL GAME -->
+<div id="wheelGame" class="game-container hidden">
+<div class="bg-[#0A0E32] rounded-[16px] border border-white/10 p-4 text-center">
+<div id="fortuneWheel" class="w-48 h-48 mx-auto rounded-full border-8 border-[#FFD700] relative overflow-hidden transition-transform duration-[4s]" style="background: conic-gradient(#FF0000 0deg 72deg, #2F80ED 72deg 144deg, #2CB26B 144deg 216deg, #FFD700 216deg 288deg, #8B5CF6 288deg 360deg);">
+<div class="absolute inset-0 flex items-center justify-center"><span class="bg-[#0A0E32] w-16 h-16 rounded-full flex items-center justify-center text-2xl">🎡</span></div>
+</div>
+<div id="wheelResult" class="mt-4 font-black">دور العجلة!</div>
+</div>
+</div>
+
+<!-- Bet Controls Shared -->
+<div class="mt-4 bg-[#121958] rounded-[16px] p-4 border border-white/10">
+<div class="flex gap-2 mb-3">
+<input id="betAmount" type="number" value="50" class="flex-1 bg-[#0A0E32] border border-white/10 rounded-xl p-3 text-center font-black">
+<button onclick="halfBet()" class="bg-white/10 px-4 rounded-xl text-sm">½</button>
+<button onclick="doubleBet()" class="bg-white/10 px-4 rounded-xl text-sm">2x</button>
+</div>
+<button id="betBtn" onclick="placeBet()" class="w-full bg-[#2CB26B] py-4 rounded-full font-black text-lg">رهان • 50 ج.م</button>
+<button id="cashoutBtn" onclick="cashout()" class="w-full bg-[#E60000] py-4 rounded-full font-black text-lg hidden">سحب • 0ج</button>
+<button id="spinBtn" onclick="spinAction()" class="w-full bg-[#FFD700] text-black py-4 rounded-full font-black text-lg hidden">دور الآن 🎡</button>
+</div>
+</div>
+</div>
+<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-full font-bold hidden z-[200] shadow-2xl"></div>
+
+<script>
+let users=JSON.parse(localStorage.getItem('el3ab_users')||'[]');
+let currentUser=JSON.parse(localStorage.getItem('el3ab_current')||'null');
+let deposits=JSON.parse(localStorage.getItem('el3ab_deposits')||'[]');
+let withdraws=JSON.parse(localStorage.getItem('el3ab_withdraws')||'[]');
+let adminPass=localStorage.getItem('admin_custom_pass')||'451240';
+let selectedMethod='vodafone', isBetting=false, betValue=0, currentMult=1, gameInterval, points=[];
+const methods=[
+{id:'vodafone',name:'فودافون كاش',num:'01554801581',color:'#E60000'},
+{id:'orange',name:'أورنج كاش',num:'01554801581',color:'#FF6600'},
+{id:'etisalat',name:'اتصالات كاش',num:'01554801581',color:'#007A33'},
+{id:'we',name:'WE كاش',num:'01554801581',color:'#702283'},
+{id:'instapay',name:'انستا باي',num:'keroulskaram05@instapay',color:'#2F80ED'}
+];
+const games=[
+{id:'crash',name:'Crash',icon:'✈️',desc:'طيارة حقيقية',mult:'2.47x'},
+{id:'plinko',name:'Plinko',icon:'🎯',desc:'هرم 1xBet',mult:'1000x'},
+{id:'roulette',name:'Roulette',icon:'🎡',desc:'روليت',mult:'35x'},
+{id:'slots',name:'Slots',icon:'🎰',desc:'سلوتس 1xBet',mult:'5000x'},
+{id:'dice',name:'Dice',icon:'🎲',desc:'دايس',mult:'10x'},
+{id:'mines',name:'Mines',icon:'💣',desc:'ألغام',mult:'100x'},
+{id:'blackjack',name:'Blackjack',icon:'♠️',desc:'بلاك جاك',mult:'2x'},
+{id:'wheel',name:'Wheel',icon:'🎡',desc:'عجلة الحظ',mult:'50x'}
+];
+
+function init(){
+ document.getElementById('gamesGrid').innerHTML=games.map(g=>`
+<div onclick="openGame('${g.id}')" class="glass rounded-[16px] p-3 cursor-pointer hover:bg-white/10 transition border border-white/10 relative">
+<div class="absolute top-2 right-2 bg-[#2CB26B]/20 text-[#2CB26B] text-[7px] px-1.5 py-0.5 rounded-full font-black">LIVE</div>
+<div class="bg-[#0A0E32] rounded-xl h-[80px] flex flex-col items-center justify-center">
+<span class="text-[28px]">${g.icon}</span><span class="text-[8px] text-white/30 mt-1">${g.mult}</span>
+</div>
+<div class="mt-2"><p class="font-black text-[11px]">${g.name}</p><p class="text-[9px] text-white/40">${g.desc}</p></div>
+</div>`).join('');
+ document.getElementById('depositMethods').innerHTML=methods.map(m=>`<div onclick="selectDep('${m.id}')" class="bg-white/5 border border-white/10 p-2 rounded-xl text-[11px] cursor-pointer flex justify-between"><span>${m.name}</span><span class="font-mono">${m.num}</span></div>`).join('');
+ updateUI(); updateSettingsLists(); checkPending();
+}
+
+function checkPending(){
+ let pending = deposits.filter(d=>d.status==='pending').length + withdraws.filter(w=>w.status==='pending').length;
+ let badge=document.getElementById('pendingBadge');
+ if(pending>0){ badge.classList.remove('hidden'); badge.textContent=pending+' طلبات جديدة'; }
+ else badge.classList.add('hidden');
+}
+
+function updateSettingsLists(){
+ let depDiv=document.getElementById('settingsDeposits');
+ let witDiv=document.getElementById('settingsWithdraws');
+ if(deposits.filter(d=>d.status==='pending').length===0) depDiv.innerHTML='<p class="text-white/20 text-center py-2 text-xs">لا يوجد طلبات معلقة</p>';
+ else depDiv.innerHTML=deposits.filter(d=>d.status==='pending').reverse().map(d=>`
+<div class="bg-[#0A0E32] border border-yellow-500/20 p-3 rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<div><p class="font-bold text-xs">👤 ${d.userName} - ${d.phone}</p><p class="text-[11px] text-white/50">💰 ${d.amount}ج - ${d.method} - ${d.proof||''}</p><p class="text-[9px] text-white/30">${d.date}</p></div>
+<span class="bg-yellow-500/20 text-yellow-400 text-[8px] px-2 py-1 rounded-full">pending</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="approveDeposit(${d.id}); event.stopPropagation();" ontouchend="approveDeposit(${d.id})" class="bg-[#2CB26B] py-3 rounded-full text-xs font-black active:scale-95 pointer-events-auto relative z-10">✅ موافقة</button>
+<button type="button" onclick="rejectDeposit(${d.id}); event.stopPropagation();" ontouchend="rejectDeposit(${d.id})" class="bg-red-600/20 text-red-400 border border-red-500/20 py-3 rounded-full text-xs font-bold active:scale-95 pointer-events-auto relative z-10">❌ رفض</button>
+</div>
+</div>`).join('') + (deposits.filter(d=>d.status!=='pending').length>0? `<p class="text-[10px] text-white/20 mt-2">آخر 3 منتهية: ${deposits.filter(d=>d.status!=='pending').slice(-3).map(d=>d.userName+' '+d.status).join('، ')}</p>` : '');
+
+ if(withdraws.filter(w=>w.status==='pending').length===0) witDiv.innerHTML='<p class="text-white/20 text-center py-2 text-xs">لا يوجد طلبات معلقة</p>';
+ else witDiv.innerHTML=withdraws.filter(w=>w.status==='pending').reverse().map(w=>`
+<div class="bg-[#0A0E32] border border-orange-500/20 p-3 rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<div><p class="font-bold text-xs">👤 ${w.userName} - ${w.phone}</p><p class="text-[11px] text-white/50">💸 ${w.amount}ج إلى ${w.wallet}</p><p class="text-[11px] text-white/50">📱 ${w.method} - ${w.date}</p></div>
+<span class="bg-orange-500/20 text-orange-400 text-[8px] px-2 py-1 rounded-full">pending</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="approveWithdraw(${w.id}); event.stopPropagation();" ontouchend="approveWithdraw(${w.id})" class="bg-[#2CB26B] py-3 rounded-full text-xs font-black active:scale-95 pointer-events-auto relative z-10">✅ موافقة سحب</button>
+<button type="button" onclick="rejectWithdraw(${w.id}); event.stopPropagation();" ontouchend="rejectWithdraw(${w.id})" class="bg-red-600 py-3 rounded-full text-xs font-bold active:scale-95 pointer-events-auto relative z-10">❌ رفض وإرجاع</button>
+</div>
+</div>`).join('');
+}
+
+
+
+function approveDeposit(id){
+ let d=deposits.find(x=>x.id===id);
+ if(!d){ toast('الطلب مش موجود'); return; }
+ if(d.status!=='pending'){ toast('⚠️ الطلب ده تمت الموافقة عليه قبل كده'); return; }
+ d.status='approved';
+ // Add balance ONLY ONCE - to users array
+ let uIdx = users.findIndex(x=>x.phone===d.phone);
+ if(uIdx>=0){
+   users[uIdx].balance = (parseInt(users[uIdx].balance)||0) + parseInt(d.amount);
+   console.log('DEPOSIT APPROVED: Added '+d.amount+' to '+users[uIdx].name+' new bal '+users[uIdx].balance);
+   // Sync currentUser if same user
+   if(currentUser && currentUser.phone===d.phone){
+     currentUser.balance = users[uIdx].balance;
+     localStorage.setItem('el3ab_current', JSON.stringify(currentUser));
+   }
+ }
+ localStorage.setItem('el3ab_deposits', JSON.stringify(deposits));
+ localStorage.setItem('el3ab_users', JSON.stringify(users));
+ updateUI(); 
+ if(typeof updateSettingsLists==='function') updateSettingsLists();
+ if(typeof checkPending==='function') checkPending();
+ toast('✅ تمت الموافقة - أضفنا '+d.amount+'ج مرة واحدة فقط - رصيده: '+(users[uIdx]?.balance||0)+'ج');
+}
+
+
+
+function approveWithdraw(id){
+ console.log('approve withdraw',id);
+ let w=withdraws.find(x=>x.id===id);
+ if(!w){ toast('الطلب مش موجود'); return; }
+ w.status='approved';
+ localStorage.setItem('el3ab_withdraws',JSON.stringify(withdraws));
+ updateSettingsLists(); checkPending();
+ toast('✅ وافقنا على سحب '+w.amount+'ج - حول لـ '+w.wallet);
+ // Open WhatsApp with details
+ let msg = `تمت الموافقة على سحب ${w.amount}ج لـ ${w.userName} - ${w.wallet}`;
+ console.log(msg);
+}
+function rejectWithdraw(id){
+ let w=withdraws.find(x=>x.id===id);
+ if(!w) return;
+ w.status='rejected';
+ let u=users.find(x=>x.phone===w.phone);
+ if(u){ u.balance+=w.amount; }
+ if(currentUser && currentUser.phone===w.phone){ currentUser.balance+=w.amount; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); }
+ localStorage.setItem('el3ab_withdraws',JSON.stringify(withdraws));
+ localStorage.setItem('el3ab_users',JSON.stringify(users));
+ updateUI(); updateSettingsLists(); checkPending();
+ toast('❌ رفضنا ورجعنا '+w.amount+'ج');
+}
+
+
+
+function openSettings(){document.getElementById('settingsModal').classList.remove('hidden'); updateSettingsLists();}
+function closeSettings(){document.getElementById('settingsModal').classList.add('hidden');}
+
+function openAdminPanel(){
+ closeSettings();
+ setTimeout(()=>{
+  let p=prompt('🔐 باسورد لوحة التحكم (451240):');
+  if(p===null) return;
+  if(p!==adminPass){ alert('❌ غلط! الباسورد: '+adminPass); return; }
+  
+  let menu = `✅ لوحة التحكم الكاملة
+  
+📥 الإيداعات المعلقة: ${deposits.filter(d=>d.status==='pending').length}
+📤 السحوبات المعلقة: ${withdraws.filter(w=>w.status==='pending').length}
+👥 المستخدمين: ${users.length}
+💰 إجمالي الأرصدة: ${users.reduce((s,u)=>s+u.balance,0)}ج
+
+اختر:
+1= الموافقة على الإيداعات
+2= الموافقة على السحوبات
+3= عرض كل المستخدمين
+4= إضافة رصيد لمستخدم
+5= تغيير باسورد اللوحة
+6= تصفير كل الأرصدة
+7= عرض كل طلبات الإيداع والسحب
+`;
+  let ch=prompt(menu);
+  
+  if(ch==='1'){
+    let pend=deposits.filter(d=>d.status==='pending');
+    if(pend.length===0){ alert('لا يوجد إيداعات معلقة'); return; }
+    pend.forEach(d=>{
+      if(confirm(`📥 طلب إيداع\n👤 ${d.userName} (${d.phone})\n💰 ${d.amount}ج\n📱 ${d.method}\n📝 ${d.proof||'لا يوجد'}\n\nموافقة؟`)){
+        d.status='approved';
+        let u=users.find(x=>x.phone===d.phone);
+        if(u){ u.balance+=d.amount; }
+        if(currentUser && currentUser.phone===d.phone){ currentUser.balance+=d.amount; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); }
+      } else {
+        if(confirm('رفض الطلب؟')) d.status='rejected';
+      }
+    });
+    localStorage.setItem('el3ab_deposits',JSON.stringify(deposits));
+    localStorage.setItem('el3ab_users',JSON.stringify(users));
+    updateUI(); updateSettingsLists(); checkPending();
+    alert('✅ تم تحديث طلبات الإيداع');
+  }
+  else if(ch==='2'){
+    let pend=withdraws.filter(w=>w.status==='pending');
+    if(pend.length===0){ alert('لا يوجد سحوبات معلقة'); return; }
+    pend.forEach(w=>{
+      if(confirm(`📤 طلب سحب\n👤 ${w.userName} (${w.phone})\n💰 ${w.amount}ج\n📱 ${w.wallet} (${w.method})\n\nموافقة؟`)){
+        w.status='approved';
+      } else {
+        if(confirm('رفض الطلب وإرجاع الرصيد؟')){
+          w.status='rejected';
+          let u=users.find(x=>x.phone===w.phone);
+          if(u){ u.balance+=w.amount; }
+          if(currentUser && currentUser.phone===w.phone){ currentUser.balance+=w.amount; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); }
+        }
+      }
+    });
+    localStorage.setItem('el3ab_withdraws',JSON.stringify(withdraws));
+    localStorage.setItem('el3ab_users',JSON.stringify(users));
+    updateUI(); updateSettingsLists(); checkPending();
+    alert('✅ تم تحديث طلبات السحب');
+  }
+  else if(ch==='3'){
+    if(users.length===0){ alert('لا يوجد مستخدمين'); return; }
+    alert(users.map((u,i)=> (i+1)+'. 👤 '+u.name+'\n   📱 '+u.phone+'\n   💰 '+u.balance+'ج').join('\n\n'));
+  }
+  else if(ch==='4'){
+    let ph=prompt('رقم المستخدم 01xxxxxxxxx:');
+    let u=users.find(x=>x.phone===ph);
+    if(!u){ alert('مش موجود'); return; }
+    let amt=parseInt(prompt('رصيد '+u.name+' الحالي: '+u.balance+'ج\nالمبلغ:'));
+    if(amt){ u.balance+=amt; localStorage.setItem('el3ab_users',JSON.stringify(users)); if(currentUser&&currentUser.phone===ph){ currentUser.balance=u.balance; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); } updateUI(); alert('✅ تم إضافة '+amt+'ج'); }
+  }
+  else if(ch==='5'){
+    let np=prompt('باسورد جديد (الحالي:'+adminPass+'):');
+    if(np&&np.length>=4){ localStorage.setItem('admin_custom_pass',np); adminPass=np; alert('✅ تم التغيير إلى '+np); }
+  }
+  else if(ch==='6'){
+    if(confirm('تصفير كل الأرصدة؟')){ users=users.map(u=>({...u,balance:0})); localStorage.setItem('el3ab_users',JSON.stringify(users)); if(currentUser){ currentUser.balance=0; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); } updateUI(); alert('✅ تم التصفير'); }
+  }
+  else if(ch==='7'){
+    let all=[...deposits.map(d=>`📥 إيداع: ${d.userName} ${d.amount}ج - ${d.status}`), ...withdraws.map(w=>`📤 سحب: ${w.userName} ${w.amount}ج - ${w.status}`)].join('\n');
+    alert(all||'لا يوجد طلبات');
+  }
+ },100);
+}
+
+function selectDep(id){selectedMethod=id; document.getElementById('selectedNumber').textContent=methods.find(x=>x.id===id).num;}
+function setDep(v){document.getElementById('depositAmount').value=v;}
+function saveUsers(){localStorage.setItem('el3ab_users',JSON.stringify(users)); if(currentUser){localStorage.setItem('el3ab_current',JSON.stringify(currentUser));} updateUI();}
+
+
+function submitDepositRequest(){
+ if(!currentUser){ toast('سجل دخول'); return; }
+ let amt=parseInt(document.getElementById('depositAmount').value);
+ let proof=document.getElementById('depositProof')?.value?.trim()||'';
+ if(!amt||amt<100){ toast('الحد الأدنى 100'); return; }
+ // DO NOT ADD BALANCE HERE - only pending
+ let dep={id:Date.now()+Math.floor(Math.random()*900), phone:currentUser.phone, userName:currentUser.name, amount:amt, method:typeof selectedMethod!=='undefined'?selectedMethod:'فودافون كاش', proof:proof, status:'pending', date:new Date().toLocaleString()};
+ deposits.push(dep);
+ localStorage.setItem('el3ab_deposits', JSON.stringify(deposits));
+ if(typeof closeDeposit==='function') closeDeposit();
+ toast('✅ تم إرسال طلب إيداع '+amt+'ج - بانتظار موافقة الإدارة - سيضاف مرة واحدة فقط بعد الموافقة');
+ if(typeof checkPending==='function') checkPending();
+ if(typeof updateSettingsLists==='function') updateSettingsLists();
+ console.log('Deposit request created, NO balance added yet:', amt);
+}
+
+function submitWithdrawRequest(){
+ if(!currentUser){ toast('سجل دخول'); return; }
+ let amt=parseInt(document.getElementById('withdrawAmount').value);
+ let wallet=document.getElementById('withdrawWallet').value;
+ let method=document.getElementById('withdrawMethod').value;
+ if(!amt||amt<100){ toast('الحد الأدنى 100'); return; }
+ if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+ if(!wallet){ toast('اكتب رقم المحفظة'); return; }
+ currentUser.balance-=amt;
+ users=users.map(u=>u.phone===currentUser.phone?currentUser:u);
+ let wit={id:Date.now(), phone:currentUser.phone, userName:currentUser.name, amount:amt, wallet:wallet, method:method, status:'pending', date:new Date().toLocaleString()};
+ withdraws.push(wit);
+ localStorage.setItem('el3ab_withdraws',JSON.stringify(withdraws));
+ localStorage.setItem('el3ab_users',JSON.stringify(users));
+ localStorage.setItem('el3ab_current',JSON.stringify(currentUser));
+ updateUI(); closeWithdraw(); toast('✅ تم إرسال طلب السحب '+amt+'ج - بانتظار الموافقة'); checkPending(); updateSettingsLists();
+}
+
+function openDeposit(){if(!currentUser){openLogin(); return;} document.getElementById('depositModal').classList.remove('hidden');}
+function closeDeposit(){document.getElementById('depositModal').classList.add('hidden');}
+function openWithdraw(){if(!currentUser){openLogin(); return;} document.getElementById('withdrawBalance').textContent=currentUser.balance+' ج.م'; document.getElementById('withdrawModal').classList.remove('hidden');}
+function closeWithdraw(){document.getElementById('withdrawModal').classList.add('hidden');}
+function openLogin(){document.getElementById('loginModal').classList.remove('hidden');}
+function closeLogin(){document.getElementById('loginModal').classList.add('hidden');}
+function openRegister(){document.getElementById('registerModal').classList.remove('hidden');}
+function closeRegister(){document.getElementById('registerModal').classList.add('hidden');}
+function doRegister(){let n=document.getElementById('regName').value.trim(); let ph=document.getElementById('regPhone').value.trim(); let p=document.getElementById('regPass').value; let p2=document.getElementById('regPass2').value; if(!n||!ph||!p){toast('اكمل البيانات'); return;} if(!/^01[0-9]{9}$/.test(ph)){toast('رقم غلط'); return;} if(p!==p2){toast('الباسورد مش متطابق'); return;} if(users.find(u=>u.phone===ph)){toast('الرقم مسجل'); return;} let nu={name:n,phone:ph,pass:p,balance:0}; users.push(nu); currentUser=nu; localStorage.setItem('el3ab_users',JSON.stringify(users)); localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); updateUI(); closeRegister(); toast('تم إنشاء حسابك ✅');}
+function doLogin(){let ph=document.getElementById('loginPhone').value.trim(); let p=document.getElementById('loginPass').value; let u=users.find(x=>x.phone===ph&&x.pass===p); if(!u){toast('بيانات غلط'); return;} currentUser=u; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); updateUI(); closeLogin(); toast('أهلا '+u.name);}
+function logout(){currentUser=null; localStorage.removeItem('el3ab_current'); updateUI();}
+function updateUI(){if(currentUser){document.getElementById('authButtons').classList.add('hidden'); document.getElementById('userBar').classList.remove('hidden'); document.getElementById('userBar').classList.add('flex'); document.getElementById('userBalance').textContent=currentUser.balance+' ج.م';}else{document.getElementById('authButtons').classList.remove('hidden'); document.getElementById('userBar').classList.add('hidden'); document.getElementById('userBar').classList.remove('flex');} updateBetBtn();}
+function updateBetBtn(){let v=document.getElementById('betAmount')?.value||50; let b=document.getElementById('betBtn'); if(b) b.textContent='رهان • '+v+' ج.م';}
+function toast(m){let t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),4000);}
+function halfBet(){let i=document.getElementById('betAmount'); i.value=Math.max(10,Math.floor(i.value/2)); updateBetBtn();}
+function doubleBet(){let i=document.getElementById('betAmount'); i.value=i.value*2; updateBetBtn();}
+
+
+let currentGameId='crash';
+function openGame(id){
+ currentGameId=id;
+ let g=games.find(x=>x.id===id);
+ document.getElementById('gameTitle').textContent=g.name;
+ document.getElementById('gameIcon').textContent=g.icon;
+ document.getElementById('gameModal').classList.remove('hidden');
+ document.querySelectorAll('.game-container').forEach(el=>el.classList.add('hidden'));
+ document.getElementById(id+'Game').classList.remove('hidden');
+ document.getElementById('betBtn').classList.remove('hidden');
+ document.getElementById('cashoutBtn').classList.add('hidden');
+ document.getElementById('spinBtn').classList.add('hidden');
+ isBetting=false;
+ if(id==='crash'){ document.getElementById('crashHistory').innerHTML=[...Array(8)].map(()=>{let v=(Math.random()*5+1.1).toFixed(2); return `<span class="bg-[#2F80ED] px-2 py-1 rounded-full text-[10px] font-bold">${v}x</span>`}).join(''); startCrashCanvas(); }
+ else if(id==='plinko'){ initPlinko(); document.getElementById('betBtn').textContent='إسقاط الكرة 🎯'; }
+ else if(id==='roulette'){ document.getElementById('betBtn').classList.add('hidden'); }
+ else if(id==='slots'){ document.getElementById('betBtn').textContent='دور 🎰'; }
+ else if(id==='dice'){ document.getElementById('betBtn').classList.add('hidden'); initDice(); }
+ else if(id==='mines'){ initMines(); document.getElementById('betBtn').textContent='ابدأ اللعب 💣'; }
+ else if(id==='blackjack'){ initBlackjack(); document.getElementById('betBtn').textContent='وزع الكروت ♠️'; }
+ else if(id==='wheel'){ document.getElementById('betBtn').classList.add('hidden'); document.getElementById('spinBtn').classList.remove('hidden'); }
+ updateBetBtn();
+}
+function closeGame(){document.getElementById('gameModal').classList.add('hidden'); clearInterval(gameInterval); isBetting=false;}
+
+// PLINKO
+function initPlinko(){
+ let board=document.getElementById('plinkoBoard');
+ board.innerHTML='';
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+   let isPin = (r+c)%2===0 && r<7;
+   board.innerHTML+=`<div class="h-6 flex items-center justify-center">${isPin?'<div class="w-2 h-2 bg-white/40 rounded-full"></div>':''}</div>`;
+  }
+ }
+ let mults=[5.6,2.1,1.1,0.8,0.5,0.8,1.1,2.1];
+ let mDiv=document.getElementById('plinkoMultipliers');
+ mDiv.innerHTML=mults.map(m=>`<div class="bg-[#FFD700] text-black text-[10px] font-black py-1 rounded text-center">${m}x</div>`).join('');
+}
+
+// ROULETTE
+let rouletteSpinning=false;
+function rouletteBet(color){
+ if(rouletteSpinning) return;
+ let amt=parseInt(document.getElementById('betAmount').value);
+ if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+ currentUser.balance-=amt; saveUsers();
+ rouletteSpinning=true;
+ let wheel=document.getElementById('rouletteWheel');
+ wheel.style.transform='rotate('+(720+Math.random()*720)+'deg)';
+ setTimeout(()=>{
+  let colors=['red','black','red','black','green'];
+  let winColor=colors[Math.floor(Math.random()*colors.length)];
+  let mult= winColor==='green'?14:2;
+  document.getElementById('rouletteResult').textContent= winColor==='red'?'🔴 أحمر':winColor==='black'?'⚫ أسود':'🟢 أخضر';
+  if(color===winColor){
+   let win=amt*mult;
+   currentUser.balance+=win; saveUsers();
+   toast('✅ كسبت '+win+'ج x'+mult);
+  } else toast('❌ خسرت - طلع '+winColor);
+  rouletteSpinning=false;
+ },3000);
+}
+
+// SLOTS
+function doSlots(){
+ let amt=parseInt(document.getElementById('betAmount').value);
+ if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+ currentUser.balance-=amt; saveUsers();
+ let symbols=['🍭','🍒','🍋','⭐','💎','7️⃣'];
+ let reels=document.getElementById('slotsReels').children;
+ let win=false;
+ for(let i=0;i<3;i++){
+  let sym=symbols[Math.floor(Math.random()*symbols.length)];
+  reels[i].textContent=sym;
+  reels[i].classList.add('animate-pulse');
+ }
+ setTimeout(()=>{
+  let s1=reels[0].textContent, s2=reels[1].textContent, s3=reels[2].textContent;
+  for(let r of reels) r.classList.remove('animate-pulse');
+  if(s1===s2 && s2===s3){
+   let mult= s1==='7️⃣'?50: s1==='💎'?20: s1==='⭐'?10:5;
+   let winAmt=amt*mult;
+   currentUser.balance+=winAmt; saveUsers();
+   document.getElementById('slotsWin').textContent='🎉 كسبت '+winAmt+'ج x'+mult+'!';
+   toast('🎉 كسبت '+winAmt+'ج');
+  } else if(s1===s2 || s2===s3 || s1===s3){
+   let winAmt=amt*1.5;
+   currentUser.balance+=winAmt; saveUsers();
+   document.getElementById('slotsWin').textContent='كسبت '+winAmt+'ج';
+  } else document.getElementById('slotsWin').textContent='حاول مرة أخرى';
+ },500);
+}
+
+// DICE
+function initDice(){
+ let slider=document.getElementById('diceSlider');
+ slider.oninput=()=>{
+  document.getElementById('diceTarget').textContent=slider.value;
+  document.getElementById('diceUnder').textContent=slider.value;
+  document.getElementById('diceOver').textContent=slider.value;
+  let underMult=(100/slider.value).toFixed(2);
+  let overMult=(100/(100-slider.value)).toFixed(2);
+  document.getElementById('diceUnderMult').textContent=underMult;
+  document.getElementById('diceOverMult').textContent=overMult;
+ };
+}
+function diceBet(type){
+ let amt=parseInt(document.getElementById('betAmount').value);
+ if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+ let target=parseInt(document.getElementById('diceSlider').value);
+ currentUser.balance-=amt; saveUsers();
+ let roll=Math.floor(Math.random()*100)+1;
+ document.getElementById('diceResult').textContent=roll;
+ document.getElementById('diceNumber').textContent=roll;
+ let win=false;
+ if(type==='under' && roll < target) win=true;
+ if(type==='over' && roll > target) win=true;
+ if(win){
+  let mult= type==='under' ? (100/target) : (100/(100-target));
+  let winAmt=Math.floor(amt*mult);
+  currentUser.balance+=winAmt; saveUsers();
+  toast('✅ كسبت '+winAmt+'ج - الرقم '+roll);
+ } else toast('❌ خسرت - الرقم '+roll);
+}
+
+// MINES
+let minesBoard=[], minesRevealed=0;
+function initMines(){
+ let grid=document.getElementById('minesGrid');
+ grid.innerHTML='';
+ minesBoard=Array(25).fill(0).map(()=>Math.random()<0.2?1:0);
+ minesRevealed=0;
+ document.getElementById('minesFound').textContent=0;
+ document.getElementById('minesProfit').textContent=0;
+ for(let i=0;i<25;i++){
+  grid.innerHTML+=`<div onclick="clickMine(${i})" id="mine-${i}" class="bg-[#1A2460] border border-white/10 h-12 rounded-lg flex items-center justify-center cursor-pointer hover:bg-white/10 text-xl">?</div>`;
+ }
+ document.getElementById('minesCashout').classList.add('hidden');
+}
+function clickMine(i){
+ if(!isBetting && minesRevealed===0){
+  let amt=parseInt(document.getElementById('betAmount').value);
+  if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+  currentUser.balance-=amt; betValue=amt; isBetting=true; saveUsers();
+  document.getElementById('betBtn').classList.add('hidden');
+  document.getElementById('minesCashout').classList.remove('hidden');
+ }
+ let cell=document.getElementById('mine-'+i);
+ if(cell.textContent!=='?') return;
+ if(minesBoard[i]===1){
+  cell.textContent='💣'; cell.style.background='#E60000';
+  isBetting=false;
+  document.getElementById('betBtn').classList.remove('hidden');
+  document.getElementById('minesCashout').classList.add('hidden');
+  toast('💥 انفجرت! خسرت '+betValue+'ج');
+  // reveal all
+  minesBoard.forEach((v,idx)=>{ if(v===1) document.getElementById('mine-'+idx).textContent='💣'; });
+ } else {
+  cell.textContent='💎'; cell.style.background='#2CB26B';
+  minesRevealed++;
+  document.getElementById('minesFound').textContent=minesRevealed;
+  let profit=Math.floor(betValue * (1 + minesRevealed*0.4));
+  document.getElementById('minesProfit').textContent=profit;
+  document.getElementById('minesCashout').textContent='سحب '+profit+'ج';
+ }
+}
+function minesCashout(){
+ let profit=parseInt(document.getElementById('minesProfit').textContent);
+ currentUser.balance+=profit; saveUsers();
+ isBetting=false;
+ document.getElementById('betBtn').classList.remove('hidden');
+ document.getElementById('minesCashout').classList.add('hidden');
+ toast('✅ كسبت '+profit+'ج');
+}
+
+// BLACKJACK
+let playerHand=[], dealerHand=[];
+function initBlackjack(){
+ playerHand=[randCard(), randCard()];
+ dealerHand=[randCard(), randCard()];
+ updateBlackjackUI();
+ document.getElementById('blackjackResult').textContent='';
+}
+function randCard(){ let vals=[2,3,4,5,6,7,8,9,10,10,10,10,11]; return vals[Math.floor(Math.random()*vals.length)]; }
+function scoreHand(h){ let s=h.reduce((a,b)=>a+b,0); while(s>21 && h.includes(11)){ let idx=h.indexOf(11); h[idx]=1; s=h.reduce((a,b)=>a+b,0); } return s; }
+function updateBlackjackUI(){
+ document.getElementById('playerCards').textContent=playerHand.join(' - ');
+ document.getElementById('playerScore').textContent=scoreHand([...playerHand]);
+ document.getElementById('dealerCards').textContent=dealerHand[0]+' - ?';
+ document.getElementById('dealerScore').textContent='?';
+}
+function blackjackHit(){
+ playerHand.push(randCard());
+ let sc=scoreHand([...playerHand]);
+ document.getElementById('playerCards').textContent=playerHand.join(' - ');
+ document.getElementById('playerScore').textContent=sc;
+ if(sc>21){ document.getElementById('blackjackResult').textContent='❌ خسرت - تجاوزت 21'; isBetting=false; document.getElementById('betBtn').classList.remove('hidden'); }
+}
+function blackjackStand(){
+ let pScore=scoreHand([...playerHand]);
+ let dScore=scoreHand([...dealerHand]);
+ while(dScore<17){ dealerHand.push(randCard()); dScore=scoreHand([...dealerHand]); }
+ document.getElementById('dealerCards').textContent=dealerHand.join(' - ');
+ document.getElementById('dealerScore').textContent=dScore;
+ let amt=parseInt(document.getElementById('betAmount').value);
+ if(dScore>21 || pScore>dScore){ currentUser.balance+=amt*2; saveUsers(); document.getElementById('blackjackResult').textContent='✅ كسبت '+amt*2+'ج!'; toast('كسبت!'); }
+ else if(pScore===dScore){ currentUser.balance+=amt; saveUsers(); document.getElementById('blackjackResult').textContent='تعادل'; }
+ else document.getElementById('blackjackResult').textContent='❌ الموزع كسب';
+ document.getElementById('betBtn').classList.remove('hidden');
+}
+
+// WHEEL
+let wheelSpinning=false;
+function spinAction(){
+ if(wheelSpinning) return;
+ if(currentGameId==='wheel'){
+  let amt=parseInt(document.getElementById('betAmount').value);
+  if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+  currentUser.balance-=amt; saveUsers();
+  wheelSpinning=true;
+  let wheel=document.getElementById('fortuneWheel');
+  wheel.style.transform='rotate('+(1440+Math.random()*1440)+'deg)';
+  setTimeout(()=>{
+   let mults=[0,0.5,1,1.5,2,3,5,10];
+   let mult=mults[Math.floor(Math.random()*mults.length)];
+   let win=amt*mult;
+   if(win>0){ currentUser.balance+=win; saveUsers(); }
+   document.getElementById('wheelResult').textContent= mult===0?'❌ خسرت':'🎉 كسبت x'+mult+' = '+win+'ج';
+   toast(mult===0?'خسرت':'كسبت '+win+'ج');
+   wheelSpinning=false;
+  },4000);
+ } else if(currentGameId==='plinko'){
+  let amt=parseInt(document.getElementById('betAmount').value);
+  if(amt>currentUser.balance){ toast('رصيدك لا يكفي'); return; }
+  currentUser.balance-=amt; saveUsers();
+  let mults=[5.6,2.1,1.1,0.8,0.5,0.8,1.1,2.1];
+  let mult=mults[Math.floor(Math.random()*mults.length)];
+  let win=amt*mult;
+  currentUser.balance+=win; saveUsers();
+  toast('Plinko x'+mult+' = '+win.toFixed(0)+'ج');
+ } else if(currentGameId==='slots'){
+  doSlots();
+ } else {
+  placeBet();
+ }
+}
+
+
+function startCrashCanvas(){
+ let canvas=document.getElementById('crashCanvas');
+ let ctx=canvas.getContext('2d');
+ canvas.width=canvas.offsetWidth*2; canvas.height=canvas.offsetHeight*2;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ document.getElementById('crashMult').textContent='1.00x';
+ document.getElementById('crashMult').style.color='white';
+ points=[];
+}
+
+
+function placeBet(){
+ if(currentGameId==='crash'){
+  if(!currentUser){toast('سجل دخول'); return;}
+  let amt=parseInt(document.getElementById('betAmount').value);
+  if(amt>currentUser.balance){toast('رصيدك لا يكفي'); openDeposit(); return;}
+  if(amt<10){toast('الحد الأدنى 10ج'); return;}
+  betValue=amt; isBetting=true; currentMult=1; points=[];
+  currentUser.balance-=amt; localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); users=users.map(u=>u.phone===currentUser.phone?currentUser:u); localStorage.setItem('el3ab_users',JSON.stringify(users)); updateUI();
+  document.getElementById('betBtn').classList.add('hidden');
+  document.getElementById('cashoutBtn').classList.remove('hidden');
+  let canvas=document.getElementById('crashCanvas');
+  let ctx=canvas.getContext('2d');
+  let crashPoint = 1 + Math.random()*4 + 0.3;
+  if(Math.random()<0.1) crashPoint = 5 + Math.random()*10;
+  let plane=document.getElementById('crashPlane');
+  let multEl=document.getElementById('crashMult');
+  gameInterval=setInterval(()=>{
+   currentMult+=0.02 + currentMult*0.015;
+   points.push(currentMult);
+   ctx.clearRect(0,0,canvas.width,canvas.height);
+   ctx.beginPath(); ctx.strokeStyle='#2F80ED'; ctx.lineWidth=5; ctx.lineCap='round';
+   ctx.moveTo(0,canvas.height-10);
+   for(let i=0;i<points.length;i++){
+     let x=(i/points.length)*canvas.width;
+     let y=canvas.height - Math.log(points[i])*90 - i*0.6 -10;
+     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+   }
+   ctx.stroke();
+   let grad=ctx.createLinearGradient(0,0,0,canvas.height);
+   grad.addColorStop(0,'rgba(47,128,237,0.35)'); grad.addColorStop(1,'rgba(47,128,237,0)');
+   ctx.lineTo(canvas.width,canvas.height); ctx.lineTo(0,canvas.height); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+   multEl.textContent=currentMult.toFixed(2)+'x';
+   document.getElementById('cashoutBtn').textContent=`سحب ${currentMult.toFixed(2)}x • ${(betValue*currentMult).toFixed(0)}ج`;
+   plane.style.left=Math.min(82,18+currentMult*5.5)+'%';
+   plane.style.bottom=Math.min(75,28+Math.log(currentMult)*22)+'%';
+   if(currentMult>=crashPoint){
+     clearInterval(gameInterval);
+     multEl.textContent='💥 '+crashPoint.toFixed(2)+'x';
+     multEl.style.color='#FF0000';
+     plane.textContent='💥';
+     plane.style.fontSize='36px';
+     setTimeout(()=>{document.getElementById('betBtn').classList.remove('hidden'); document.getElementById('cashoutBtn').classList.add('hidden'); isBetting=false; plane.textContent='✈️'; plane.style.fontSize='28px'; toast('انفجرت عند '+crashPoint.toFixed(2)+'x - خسرت '+betValue+'ج');},1200);
+   }
+  },60);
+ } else {
+  spinAction();
+ }
+}
+function cashout(){
+ if(!isBetting) return;
+ clearInterval(gameInterval);
+ let win=Math.floor(betValue*currentMult);
+ currentUser.balance+=win;
+ localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); users=users.map(u=>u.phone===currentUser.phone?currentUser:u); localStorage.setItem('el3ab_users',JSON.stringify(users)); updateUI();
+ document.getElementById('betBtn').classList.remove('hidden');
+ document.getElementById('cashoutBtn').classList.add('hidden');
+ isBetting=false;
+ toast(`كسبت ${win}ج ✅ x${currentMult.toFixed(2)}`);
+}
+function cashout(){
+ if(!isBetting) return;
+ clearInterval(gameInterval);
+ let win=Math.floor(betValue*currentMult);
+ currentUser.balance+=win;
+ localStorage.setItem('el3ab_current',JSON.stringify(currentUser)); users=users.map(u=>u.phone===currentUser.phone?currentUser:u); localStorage.setItem('el3ab_users',JSON.stringify(users)); updateUI();
+ document.getElementById('betBtn').classList.remove('hidden');
+ document.getElementById('cashoutBtn').classList.add('hidden');
+ isBetting=false;
+ toast(`كسبت ${win}ج ✅ x${currentMult.toFixed(2)}`);
+}
+
+init();
+document.getElementById('betAmount')?.addEventListener('input',updateBetBtn);
+</script>
+</body>
+</html>
